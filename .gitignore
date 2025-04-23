@@ -27,3 +27,6 @@ yarn-error.log*
 venv
 __pycache__
 .flaskenv
+
+/api/responses/*
+/api/uploads/*
