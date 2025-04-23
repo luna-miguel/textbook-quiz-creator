@@ -1,0 +1,58 @@
+{
+    "all": [
+        {
+            "question": "What did the Wagner Act establish after a previous act was struck down?",
+            "correct_answer": "The Wagner Act established the National Labor Relations Act (1935) for workers' rights.",
+            "incorrect_answers": [
+                "The Wagner Act established the Social Security Act and its tax for old age benefits.",
+                "The Wagner Act established the Fair Labor Standards Act and its minimum wage requirements.",
+                "The Wagner Act established the Works Progress Administration to create public works."
+            ]
+        },
+        {
+            "question": "What was the purpose of the Social Security Act (1935)?",
+            "correct_answer": "The Social Security Act required workers to pay a tax for their retirement after age 65.",
+            "incorrect_answers": [
+                "The Social Security Act aimed to eliminate minimum wage laws for workers.",
+                "The Social Security Act established job training programs for unemployed workers.",
+                "The Social Security Act provided funds for infrastructure development during the Depression."
+            ]
+        },
+        {
+            "question": "What was the ruling in the West Coast Hotel v. Parish case?",
+            "correct_answer": "The ruling allowed states to set minimum wage laws under their jurisdiction.",
+            "incorrect_answers": [
+                "The ruling required companies to hire a minimum percentage of workers.",
+                "The ruling invalidated all state labor laws under the Liberty of Contract.",
+                "The ruling stated the federal government could not regulate intrastate commerce."
+            ]
+        },
+        {
+            "question": "What did the NLRB v. Jones and Laughlin Steel case establish?",
+            "correct_answer": "The case established that Congress could regulate all commerce as interstate.",
+            "incorrect_answers": [
+                "The case prohibited federal regulation of any labor relations in the states.",
+                "The case determined that states must enforce federal minimum wage laws.",
+                "The case restricted workers' rights to bargain collectively through agents."
+            ]
+        },
+        {
+            "question": "What does the Fair Labor Standards Act (1938) mandate?",
+            "correct_answer": "It mandates an 8-hour work day and sets the federal minimum wage.",
+            "incorrect_answers": [
+                "It mandates insurance for workers injured on the job during working hours.",
+                "It mandates unemployment benefits for workers who lose their jobs.",
+                "It mandates that all workers receive a 10-day paid vacation each year."
+            ]
+        },
+        {
+            "question": "What was the purpose of the WPA during the Great Depression?",
+            "correct_answer": "The WPA financed and oversaw public work projects to create employment.",
+            "incorrect_answers": [
+                "The WPA focused solely on providing direct financial aid to the elderly.",
+                "The WPA developed nationwide programs for unemployment insurance.",
+                "The WPA created new federal regulations for private sector job creation."
+            ]
+        }
+    ]
+}
