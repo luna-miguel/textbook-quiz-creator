@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, send_file
 import json
 
 import os
@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 
 from pypdf import PdfReader
 from docx import Document
+import fpdf
 
 from openai import OpenAI
 
@@ -216,9 +217,65 @@ def generate_quiz():
     except Exception as e:
         return {'message': 'Something went wrong. Please try again.'}, 400
 
-# TODO: finish this!
 @app.route('/export', methods=['POST'])
 def export():
     data = request.get_json()
     if not data:
         return {"error": "No data received"}, 400
+
+    pdf = fpdf.FPDF(format='letter') 
+    pdf.set_font("Times", size=12) 
+    pdf.set_left_margin(10)
+    pages = 0
+
+    choices = ["a", "b", "c", "d"]
+    indent = " " * 8
+    for i in range(len(data)):
+
+        if i % 5 == 0:
+            pdf.add_page() # Create new page
+            pages += 1
+            pdf.multi_cell(0, 0, txt=f"{pages}", align="R")
+            pdf.set_font("Times", size=12, style="B") 
+            pdf.multi_cell(0, 5, txt="Created with AI Textbook Quiz Creator", align="L")
+            pdf.multi_cell(0, 5, txt="Name: _____________________", align="L")
+            pdf.multi_cell(0, 5, txt="Date: _____________________", align="L")
+            pdf.set_font("Times", size=12) 
+            pdf.multi_cell(0, 10)
+        
+        item = data[i]
+        obj, questions = item[0], item[1]
+
+        pdf.set_font("Times", size=12, style="B") 
+        pdf.multi_cell(0,5, f"{i+1}. {obj['question']}", align="L")
+        pdf.multi_cell(0,5)
+        pdf.set_font("Times", size=12) 
+
+        for i in range(len(questions)):
+            pdf.multi_cell(0, 5, f"{indent + choices[i]}.\t{questions[i]}")
+
+        pdf.multi_cell(0, 10)
+
+    for i in range(len(data)):
+        if i % 15 == 0:
+            pdf.add_page() # Create new page
+            pages += 1
+            pdf.multi_cell(0, 0, txt=f"{pages}", align="R")
+            pdf.set_font("Times", size=12, style="B") 
+            pdf.multi_cell(0, 5, txt="Created with AI Textbook Quiz Creator", align="L")
+            pdf.multi_cell(0, 5, txt="ANSWER KEY", align="L")
+            pdf.set_font("Times", size=12) 
+            pdf.multi_cell(0, 10)
+            
+        item = data[i]
+        obj, questions = item[0], item[1]
+
+        pdf.set_font("Times", size=12, style="B") 
+        pdf.multi_cell(0, 8, f"{i+1}: {indent} ({choices[questions.index(obj['correct_answer'])]})", align="L")
+        pdf.set_font("Times", size=12) 
+
+
+    res = os.path.join(app.config['RESPONSE_FOLDER'], "export.pdf")
+    pdf.output(res)
+
+    return send_file(res, as_attachment=True, download_name="export.pdf")
