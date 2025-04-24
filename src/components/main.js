@@ -196,7 +196,7 @@ function App() {
       <h1> Textbook Quiz Creator </h1>
 
       <form id="upload" onSubmit={handleSubmit}>
-      <input type="file" id="input" onChange={handleInput} accept=".pdf, .doc, .docx, .txt"/> <br/>
+      <input type="file" id="input" onChange={handleInput} accept=".pdf, .docx, .txt"/> <br/>
       <button type="submit" id="submit" disabled>Upload</button>
       </form>
 

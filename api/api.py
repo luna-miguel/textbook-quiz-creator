@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 
 from pypdf import PdfReader
 from docx import Document
-from doc2docx import convert
 
 from openai import OpenAI
 
@@ -17,13 +16,13 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Allowed file types
-ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt'}
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
 # ChatGPT responses go here (in JSON format)
 RESPONSE_FOLDER = 'responses'
 app.config['RESPONSE_FOLDER'] = RESPONSE_FOLDER
 
-text = ""
+text = []
 
 # Check i
 def allowed_file(filename):
@@ -49,28 +48,38 @@ def upload():
         filename, extension = os.path.splitext(filepath)
 
         global text
+        chunk = ""
 
         if extension == ".pdf":
             reader = PdfReader(filepath)
             for i in range(len(reader.pages)):
-                text += reader.pages[i].extract_text(extraction_mode="layout", layout_mode_space_vertically=False)
-            text = " ".join(text.split())
-
-        # Convert doc to docx
-        if extension == ".doc":
-            convert(filepath, filepath+"x")
-            filepath, extension = filepath+"x", ".docx"
+                chunk += reader.pages[i].extract_text(extraction_mode="layout", layout_mode_space_vertically=False)
+                chunk = " ".join(chunk.split()) # Seemingly fixes odd formatting of read string from PDF
+                if len(chunk) > 2000:
+                    text.append(chunk)
+                    chunk = ""   
+            text.append(chunk)
 
         if extension == ".docx":
             doc = Document(filepath)
-            fullText = []
             for para in doc.paragraphs:
-                text += para.text
+                chunk += para.text
+                if len(chunk) > 2000:
+                    text.append(chunk)
+                    chunk = ""
+            text.append(chunk)
+
 
         if extension == ".txt":
             f = open(filepath, "r")
-            text += f.read()
-
+            lines = f.readlines()
+            for line in lines:
+                chunk += line
+                if len(chunk) > 2000:
+                    text.append(chunk)
+                    chunk = ""
+            text.append(chunk)
+        
         return {'text': text}, 200
 
     else:
@@ -88,49 +97,53 @@ Only return the resulting JSON file."
 @app.route('/generate_cards', methods=['POST'])
 def generate_cards():
     global text
-
-    # TODO: split the text, multiple responses, and recombine if the PDF is too large
+    outputs = []
     try:
-        response = client.responses.create(
-            model="gpt-4o-mini",
-            input=[
-            {"role": "system", "content": prompt_flashcards},
-            {"role": "user", "content": text}
-            ],
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "textbook_summarization",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "all": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "concept": {"type": "string"},
-                                        "definition": {"type": "string"},
+        for chunk in text:
+            response = client.responses.create(
+                model="gpt-4o-mini",
+                input=[
+                {"role": "system", "content": prompt_flashcards},
+                {"role": "user", "content": chunk}
+                ],
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "textbook_summarization",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "all": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "concept": {"type": "string"},
+                                            "definition": {"type": "string"},
+                                        },
+                                        "required": ["concept", "definition"],
+                                        "additionalProperties": False,
                                     },
-                                    "required": ["concept", "definition"],
-                                    "additionalProperties": False,
                                 },
                             },
+                            "required": ["all"],
+                            "additionalProperties": False,
                         },
-                        "required": ["all"],
-                        "additionalProperties": False,
+                        "strict": True,
                     },
-                    "strict": True,
                 },
-            },
-        ) 
+            ) 
+            outputs.append(json.loads(response.output_text))
 
-        output = json.loads(response.output_text)
+        res = {"all": []}
+        for output in outputs:
+            res["all"].extend(output["all"])
+        
         path = os.path.join(app.config['RESPONSE_FOLDER'], "flashcards.json")
         with open(path, "w") as json_file:
-            json.dump(output, json_file, indent=4)
+            json.dump(res, json_file, indent=4)
 
-        return output
+        return res
 
     except Exception as e:
         return {'message': 'Something went wrong. Please try again.'}, 400
@@ -147,54 +160,58 @@ Only return the resulting JSON file."
 @app.route('/generate_quiz', methods=['POST'])
 def generate_quiz():
     global text
+    outputs = []
 
-    # TODO: split the text, multiple responses, and recombine if the PDF is too large
     try:
-
-        response = client.responses.create(
-            model="gpt-4o-mini",
-            input=[
-            {"role": "system", "content": prompt_quiz},
-            {"role": "user", "content": text}
-            ],
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "textbook_summarization",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "all": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "question": {"type": "string"},
-                                        "correct_answer": {"type": "string"},
-                                        "incorrect_answers": {
-                                            "type": "array",
-                                            "items": { "type": "string", }
+        for chunk in text:
+            response = client.responses.create(
+                model="gpt-4o-mini",
+                input=[
+                {"role": "system", "content": prompt_quiz},
+                {"role": "user", "content": chunk}
+                ],
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "textbook_summarization",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "all": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "question": {"type": "string"},
+                                            "correct_answer": {"type": "string"},
+                                            "incorrect_answers": {
+                                                "type": "array",
+                                                "items": { "type": "string", }
+                                            },
                                         },
+                                        "required": ["question", "correct_answer", "incorrect_answers"],
+                                        "additionalProperties": False,
                                     },
-                                    "required": ["question", "correct_answer", "incorrect_answers"],
-                                    "additionalProperties": False,
                                 },
                             },
+                            "required": ["all"],
+                            "additionalProperties": False,
                         },
-                        "required": ["all"],
-                        "additionalProperties": False,
+                        "strict": True,
                     },
-                    "strict": True,
                 },
-            },
-        ) 
+            ) 
+            outputs.append(json.loads(response.output_text))
 
-        output = json.loads(response.output_text)
+        res = {"all": []}
+        for output in outputs:
+            res["all"].extend(output["all"])
+        
         path = os.path.join(app.config['RESPONSE_FOLDER'], "quiz.json")
         with open(path, "w") as json_file:
-            json.dump(output, json_file, indent=4)
+            json.dump(res, json_file, indent=4)
 
-        return output
+        return res
 
     except Exception as e:
         return {'message': 'Something went wrong. Please try again.'}, 400
