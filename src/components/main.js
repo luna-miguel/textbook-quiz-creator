@@ -181,12 +181,17 @@ function App() {
       body: JSON.stringify(questions),
       headers: {'Content-type': 'application/json'}
     })
-    .then(res => res.json())
+    .then(res => { return res.blob(); })
     .then(
-      data => { 
-        console.log(data);
-        if("message" in data) { setStatus("An error occurred. Please try again.") }
-        else { setQuestions(data); setStatus(""); }
+      blob => { // Download exported file once received
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'export.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
       }
     )
   }
