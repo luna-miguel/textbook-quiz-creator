@@ -1,10 +1,10 @@
 import React, {useState, useEffect} from 'react';
-import '../style.css';
+import './style.css';
 
 function App() {
 
   // Uploaded file
-  var file;
+  const [file, setFile] = useState();
 
   const [status, setStatus] = useState("");
 
@@ -22,6 +22,8 @@ function App() {
 
   // Index of current flashcard that should be shown, assuming only one can be seen at a time 
   const [currentCard, setCurrentCard] = useState(0);
+  // Index of current quiz question that should be shown, assuming only one can be seen at a time 
+  const [currentQuestion, setCurrentQuestion] = useState(0);
   // Strings that indicates if the current definition should be visible, should the user toggle visibilty
   // Should only ever take values "none" for invisible and "block" for visible (this goes to the element's display in style)
   const [viewDefinition, setViewDefinition] = useState("none");
@@ -33,21 +35,53 @@ function App() {
   // Score for quiz
   const [score, setScore] = useState(0);
 
+  // Send uploaded file to backend once it is received
+  useEffect(() => {
+
+    if (file !== undefined) {
+
+      document.getElementById("input").style.display = "none";
+
+      console.log(file)
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Get text to backend
+      fetch('/upload', {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => { console.log(data); })
+
+      setStatus("Generating response...")
+    
+      // Make API call to backend
+      fetch('/generate_cards', {
+        method: "POST",
+      })
+      .then(res => res.json())
+      .then(data => { 
+        console.log(data); 
+        if("message" in data) { setStatus("An error occurred. Please try again.") }
+        else { setCards(data); setStatus("") }
+      })
+
+    }
+
+    
+  }, [file])
+
   useEffect(() => {
     if(cards !== undefined) { // Setup view once GPT response is loaded
-
       // Initialize definition view array
       setViewDefinition("none");
-
-      // Remove button usage
-      document.getElementById("upload").display = "none";
-
     }
   }, [cards, currentCard]) // Retrigger when current card changes to re-hide definitions
 
-  useEffect(() => { // Trigger when mode changes (reset card view and quiz score)
+  useEffect(() => { // Trigger when mode changes (reset card view)
     setCurrentCard(0); 
-    setScore(0);
   }, [mode])
 
   useEffect(() => {
@@ -64,47 +98,7 @@ function App() {
       setQuestions(res);
     }
   }, [quiz]);
-
-  // Set file, toggle button controls, send to backend
-  function handleInput(event) {
-    file = event.target.files[0];
-
-    if (event.target.files[0] !== undefined) { document.getElementById("submit").disabled = false; }
-    else { document.getElementById("submit").disabled = true; }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    // Get text to backend
-    fetch('/upload', {
-      method: "POST",
-      body: formData
-    })
-    .then(res => res.json())
-    .then(data => { console.log(data); })
-  }
   
-  // Begin GPT inference for flashcards
-  function handleSubmit(event) {
-    event.preventDefault() 
-
-    setStatus("Generating response...")
-
-    // Toggle button controls
-    document.getElementById("upload").style.display = "none";
-  
-    // Make API call to backend
-    fetch('/generate_cards', {
-      method: "POST",
-    })
-    .then(res => res.json())
-    .then(data => { 
-      console.log(data); 
-      if("message" in data) { setStatus("An error occurred. Please try again.") }
-      else { setCards(data); setStatus("") }
-    })
-
-  }
   
   // Set file, toggle button controls, send to backend
   function generateQuiz(event) {
@@ -115,7 +109,6 @@ function App() {
     const formData = new FormData();
     formData.append('file', file);
   
-    document.getElementById("restart").disabled = true;
     document.getElementById("make-quiz").disabled = true;
 
     // Make API call to backend
@@ -131,8 +124,8 @@ function App() {
       }
     )
 
-    document.getElementById("restart").disabled = false;
     document.getElementById("make-quiz").disabled = false;
+    setMode(1);
 
   }
 
@@ -170,7 +163,7 @@ function App() {
       document.getElementById(`label-${response}`).style.color = "red";
     }
     document.getElementById(`label-${answer}`).style.color = "green";
-
+    document.getElementById(`next-${q}`).style.display = "block";
   }
 
   // Send questions to backend and create PDF document of quiz
@@ -200,31 +193,19 @@ function App() {
     <div>
       <h1> Textbook Quiz Creator </h1>
 
-      <form id="upload" onSubmit={handleSubmit}>
-      <input type="file" id="input" onChange={handleInput} accept=".pdf, .docx, .txt"/> <br/>
-      <button type="submit" id="submit" disabled>Upload</button>
-      </form>
+      <input type="file" id="input" onChange={(e) => setFile(e.target.files[0])} accept=".pdf, .docx, .txt"/> <br/>
 
       { status }
 
       { cards !== undefined ?
         <div>
-          
-          <button id="restart" onClick={(e) => window.location.reload()}>Upload another file</button> <br/> 
-
-          { questions !== undefined ?
-          <div>
-          <input type="radio" id="cards" name="mode" onClick={(e) => {setMode(0)}}></input> 
-          <label htmlFor="cards">Flashcards</label>
-          <input type="radio" id="quiz" name="mode" onClick={(e) => {setMode(1)}}></input>
-          <label htmlFor="quiz">Quiz</label> 
-          </div> 
-          : <div> <button id="make-quiz" onClick={generateQuiz}>Generate quiz</button> <br/> </div>
-          }
-
 
           { mode === 0 ? // Flashcard mode
             <div> 
+              { questions !== undefined ? 
+                <div> <button onClick={(e) => setMode(1)}>Go to quiz</button> <br/> </div>
+                : <div> <button id="make-quiz" onClick={generateQuiz}>Generate quiz</button> <br/> </div>
+              }
               { cards.all.map((item, i) => 
                 i === currentCard ?
                   <div>
@@ -255,24 +236,34 @@ function App() {
           : // Quiz mode
           <div>
             { questions !== undefined ? 
-              <div> 
-                <div> Current score: {score} / {questions.length} </div> 
-                <button onClick={exportQuiz}>Export quiz</button>
-                {questions.map((q, i) => 
-                  <div>
-                    <div id={`question-${q}`}> {i+1}. {q[0].question} </div>
-                    <form id={`choices-${q}`}>
-                    {q[1].map((choice, j) => 
-                        <>
-                        <input type='radio' id={`${q}-${j}`} name={`${q}`} value={`${choice}`}></input>
-                        <label id={`label-${choice}`} htmlFor={`${q}-${j}`}> {choice} </label> <br/>
-                        </>
-                    )}
-                    </form>
-                    <button id={`submit-${q}`} onClick={(e) => checkAnswer(q)}>Check</button>
-                  </div>
-                )}
-              </div>
+              currentQuestion < questions.length ?
+                <div> 
+                  {questions.map((q, i) => 
+                    i === currentQuestion ?
+                    <div>
+                      <div> Current score: {score} / {questions.length} </div> 
+                      <div id={`question-${q}`}> {i+1}. {q[0].question} </div>
+                      <form id={`choices-${q}`}>
+                      {q[1].map((choice, j) => 
+                          <>
+                          <input type='radio' id={`${q}-${j}`} name={`${q}`} value={`${choice}`} onclick={(e) => checkAnswer(q)}></input>
+                          <label id={`label-${choice}`} htmlFor={`${q}-${j}`}> {choice} </label> <br/>
+                          </>
+                      )}
+                      </form>
+                      <button id={`submit-${q}`} onClick={(e) => checkAnswer(q)}>Check</button>
+                      <button id={`next-${q}`} style={{"display": "none"}} onClick={(e) => setCurrentQuestion(currentQuestion+1)}>Next</button>
+                    </div>
+                    : <div/>
+                  )}
+                </div>
+                :                     
+                <div>
+                  <div> Your score: {score} / {questions.length} </div> 
+                  <button onClick={exportQuiz}>Export quiz</button>
+                  <button onClick={(e) => {setCurrentQuestion(0); setScore(0);}}>Retry</button>
+                  <button onClick={(e) => {setCurrentQuestion(0); setScore(0); setMode(0);}}>Back to flashcards</button>
+                </div>
               : <div/>
             }
           </div> 

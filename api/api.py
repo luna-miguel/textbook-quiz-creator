@@ -49,6 +49,7 @@ def upload():
         filename, extension = os.path.splitext(filepath)
 
         global text
+        text = []
         chunk = ""
 
         if extension == ".pdf":
