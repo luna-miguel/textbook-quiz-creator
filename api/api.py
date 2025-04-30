@@ -33,10 +33,10 @@ def allowed_file(filename):
 def upload():
 
     if 'file' not in request.files:
-        return {'message': 'No file part in the request'}, 400
+        return {'error': 'No file part in the request'}, 400
     file = request.files['file']
     if file.filename == '':
-        return {'message': 'No file selected'}, 400
+        return {'error': 'No file selected'}, 400
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
@@ -44,7 +44,7 @@ def upload():
 
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         if not os.path.exists(filepath):
-            return {'message': 'File not found'}, 400
+            return {'error': 'File not found'}, 400
 
         filename, extension = os.path.splitext(filepath)
 
@@ -85,7 +85,7 @@ def upload():
         return {'text': text}, 200
 
     else:
-        return {'message': 'Invalid file type'}, 422
+        return {'error': 'Invalid file type'}, 422
 
 client = OpenAI( api_key=os.environ.get("OPENAI_API_KEY") )
 
@@ -148,7 +148,7 @@ def generate_cards():
         return res
 
     except Exception as e:
-        return {'message': 'Something went wrong. Please try again.'}, 400
+        return {'error': 'Something went wrong. Please try again.'}, 400
 
 prompt_quiz = "You are to use the following text to generate a multiple-choice style quiz. \
 Each quiz question should have exactly four answer choices, with one correct and the other three incorrect. \
@@ -216,7 +216,7 @@ def generate_quiz():
         return res
 
     except Exception as e:
-        return {'message': 'Something went wrong. Please try again.'}, 400
+        return {'error': 'Something went wrong. Please try again.'}, 400
 
 @app.route('/export', methods=['POST'])
 def export():
