@@ -150,9 +150,7 @@ You'll need an installation of Python with PIP and your preferred method of clon
 
 See the video below to watch a walkthrough of this application.
 
-<video width="320" height="240" controls>
-  <source src="demo.mp4" type="video/mp4">
-</video>
+https://github.com/user-attachments/assets/a7333727-a50e-4111-bd0d-2a144b4a6431
 
 <p align="right"><a href="#readme-top">Back to top</a></p>
 
