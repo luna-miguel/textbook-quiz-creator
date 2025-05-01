@@ -10,10 +10,7 @@
 
 # ✅ [AI Textbook Quiz Creator](https://ai-textbook-quiz-creator.onrender.com/) 
 
-<br/>
-<div align="center">
-  <img src="front-page.gif" alt="Front page">
-</div>
+![front-page](https://github.com/user-attachments/assets/00b75305-698a-472c-bd23-7fb5051c6cc9)
 
 <details>
   <summary>Table of Contents</summary>
