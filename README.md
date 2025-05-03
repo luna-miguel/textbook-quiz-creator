@@ -59,9 +59,10 @@ with less stress and better quality time!
 
 ### Built with
 
-[![Python][Python]][Python-url]
-[![JavaScript][JavaScript]][JavaScript-url]
 [![React][React]][React-url]
+[![Flask][Flask]][Flask-url]
+[![JavaScript][JavaScript]][JavaScript-url]
+[![Python][Python]][Python-url]
 [![ChatGPT][ChatGPT]][ChatGPT-url]
 [![NPM][NPM]][NPM-url]
 [![Render][Render]][Render-url]
@@ -81,7 +82,7 @@ You'll need an installation of Python with PIP and your preferred method of clon
    git clone https://github.com/luna-miguel/textbook-quiz-creator.git
    ```
 
-### Setup
+#### Setup
 
 ### Installing the backend
 1. In the API folder, create a virtual environment `venv` and activate it.
@@ -216,5 +217,8 @@ If you have any questions or comments to share regarding this project, contact o
 
 [Render]: https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white
 [Render-url]: https://render.com/
+
+[Flask]: https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white
+[Flask-url]: https://flask.palletsprojects.com/en/stable/
 
 
