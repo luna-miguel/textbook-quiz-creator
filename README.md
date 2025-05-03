@@ -82,9 +82,9 @@ You'll need an installation of Python with PIP and your preferred method of clon
    git clone https://github.com/luna-miguel/textbook-quiz-creator.git
    ```
 
-#### Setup
+### Setup
 
-### Installing the backend
+#### Installing the backend
 1. In the API folder, create a virtual environment `venv` and activate it.
 ```sh
    cd api
