@@ -125,7 +125,7 @@ You'll need an installation of Python with PIP and your preferred method of clon
 
 1. **Upload your text document to the file acceptor.**
     * Accepts .pdf, .docx, and .txt documents
-    * Recommended files are max ~1MB of text
+    * Recommended files are max ~5MB of text
   
 2. **The website will automatically generate and open the flashcards once your file has been uploaded.**
     * Use the left and right arrows or pagination dots to navigate the flashcards.
